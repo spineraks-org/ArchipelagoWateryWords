@@ -18,7 +18,7 @@ class YachtDiceItem(Item):
 
 letters = list(string.ascii_uppercase)
 item_table = {l: ItemData(1000209000+n, ItemClassification.progression) for n,l in enumerate(letters)}
-item_table["Extra turn"] = ItemData(100029200, ItemClassification.progression)
+item_table["Extra turn"] = ItemData(1000208000, ItemClassification.progression)
 
 group_table: Dict[str, Set[str]] = {
     "Tiles": letters

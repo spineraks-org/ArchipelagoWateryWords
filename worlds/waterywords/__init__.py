@@ -7,7 +7,7 @@ from worlds.AutoWorld import WebWorld, World
 
 from .Items import YachtDiceItem, item_table, group_table
 from .Locations import YachtDiceLocation, all_locations, ini_locations
-from .Rules import set_yacht_completion_rules, set_yacht_rules
+from .Rules import set_yacht_completion_rules, set_yacht_rules, calculate_score_in_logic
 
 
 class YachtDiceWeb(WebWorld):
@@ -82,21 +82,22 @@ class YachtDiceWorld(World):
             WW_letters.remove(letter)  # This removes one occurrence of the letter from WW_letters
         self.itempool += WW_letters
         
-        self.precollected += ["Extra turn"] * 3
+        self.precollected += ["Extra turn"] * 1
         self.itempool += ["Extra turn"] * 10
         
         for item in self.precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
         # max score is the value of the last check. Goal score is the score needed to 'finish' the game
-        self.max_score = 1000
-        self.goal_score = 777
+        self.max_score = 210
+        self.goal_score = 200
         
         self.number_of_locations = len(self.itempool) + 1
 
 
     def create_items(self):
         self.multiworld.itempool += [self.create_item(name) for name in self.itempool]
+        print(f"items {len(self.multiworld.itempool)}")
 
     def create_regions(self):
         # call the ini_locations function, that generates locations based on the inputs.
@@ -123,6 +124,8 @@ class YachtDiceWorld(World):
         self.get_location(victory_location_name).place_locked_item(
             Item("Victory", ItemClassification.progression, None, self.player)
         )
+        
+        print(f"locations {location_table}")
 
         # add the regions
         connection = Entrance(self.player, "New Board", menu)
