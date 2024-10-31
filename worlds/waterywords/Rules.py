@@ -23,14 +23,20 @@ def set_yacht_rules(world: MultiWorld, player: int):
         set_rule(
             location,
             lambda state, curscore=location.watery_words_score, player=player: 
-                calculate_score_in_logic(state.count_group("Tiles", player), state.count("Extra turn", player)) >= curscore,
+                calculate_score_in_logic(
+                    state.count_group("Tiles", player), 
+                    state.count("Extra turn", player),
+                    state.count_group("Bonuses", player)
+                ) >= curscore,
         )
         
-def calculate_score_in_logic(letters, turns):
+def calculate_score_in_logic(letters, turns, bonuses):
     if letters < 8:
         return letters
-    return min(letters * 2.25, turns * 20)
-
+    bonus = 1
+    if turns > 3:
+        bonus = 1 + 0.1 * bonuses
+    return min(letters * 2.25, turns * 15) * bonus
 
 def set_yacht_completion_rules(world: MultiWorld, player: int):
     """
