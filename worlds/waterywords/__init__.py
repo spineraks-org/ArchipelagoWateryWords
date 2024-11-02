@@ -9,6 +9,8 @@ from .Items import YachtDiceItem, item_table, group_table, bonus_item_list
 from .Locations import YachtDiceLocation, all_locations, ini_locations
 from .Rules import set_yacht_completion_rules, set_yacht_rules, calculate_score_in_logic
 
+from .Options import YachtDiceOptions
+
 
 class YachtDiceWeb(WebWorld):
     tutorials = [
@@ -34,6 +36,7 @@ class YachtDiceWorld(World):
     """
 
     game: str = "Watery Words"
+    options_dataclass = YachtDiceOptions
 
     web = YachtDiceWeb()
 
@@ -68,6 +71,7 @@ class YachtDiceWorld(World):
             ['S'] * 4 + ['T'] * 6 + ['U'] * 4 + ['V'] * 2 + ['W'] * 2 + ['X'] * 1 +
             ['Y'] * 2 + ['Z'] * 1
         )
+        self.max_letters = len(WW_letters)
 
         possible_start_words = ["the", "and", "for", "are", "but", "not", "you", "all", "any", "can", "had", "her", "was", "one", "our", "out", "day", "get", "has", "him", "his", "how", "man", "new", "now", "old", "see", "two", "way", "who", "boy", "did", "its", "let", "put", "say", "she", "too", "use"];
         
@@ -83,16 +87,24 @@ class YachtDiceWorld(World):
         
         self.precollected += ["Extra turn"] * 1
         self.itempool += ["Extra turn"] * 10
+        self.max_turns = 11
                 
         for bonuses in bonus_item_list:
-            self.itempool.append(self.random.choice(bonuses))
+            item = self.random.choices(bonuses, weights=[8, 16, 12, 24])[0]
+            if item.split(" ", 1)[1] in ["0,0", "0,14", "14,0", "14,14", "7,1", "2,4", "12,4", "2,10", "12,10", "7,13"]:
+                self.precollected.append(item)
+            else:
+                self.itempool.append(item)
+        self.max_bonus_tiles = len(bonus_item_list)
         
         for item in self.precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
         # max score is the value of the last check. Goal score is the score needed to 'finish' the game
-        self.max_score = 300
-        self.goal_score = 300
+        self.max_score = self.options.score_for_last_check.value
+        self.goal_score = min(self.max_score, self.options.score_for_goal.value)
+        
+        self.multiworld.early_items[self.player]["Extra turn"] = 1
         
         self.number_of_locations = len(self.itempool) + 1
 
@@ -139,14 +151,28 @@ class YachtDiceWorld(World):
         """
         set rules per location, and add the rule for beating the game
         """
+
+        self.logic_factor = max(1.1 * self.max_score / (min(self.max_letters * 2, self.max_turns * 20) * (1 + 0.03 * self.max_bonus_tiles)), 1)
+        
         set_yacht_rules(
             self.multiworld,
-            self.player
+            self.player,
+            self.logic_factor,
+            self.max_letters + self.max_turns + self.max_bonus_tiles
         )
         set_yacht_completion_rules(self.multiworld, self.player)
-
-
+        
     def create_item(self, name: str) -> Item:
         item_data = item_table[name]
         item = YachtDiceItem(name, item_data.classification, item_data.code, self.player)
         return item
+
+
+    def fill_slot_data(self):
+        slot_data = {}
+        slot_data["ap_world_version"] = self.ap_world_version
+        slot_data["goal_score"] = self.goal_score
+        slot_data["logic_factor"] = self.logic_factor
+        slot_data["max_items"] = self.max_letters + self.max_turns + self.max_bonus_tiles
+        
+        return slot_data

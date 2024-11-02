@@ -14,7 +14,7 @@ from worlds.generic.Rules import set_rule
 # We then pick a correct percentile to reflect the correct score that should be in logic.
 # The score is logic is *much* lower than the actual maximum reachable score.
 
-def set_yacht_rules(world: MultiWorld, player: int):
+def set_yacht_rules(world: MultiWorld, player: int, factor, max_items):
     """
     Sets rules on reaching scores
     """
@@ -26,17 +26,21 @@ def set_yacht_rules(world: MultiWorld, player: int):
                 calculate_score_in_logic(
                     state.count_group("Tiles", player), 
                     state.count("Extra turn", player),
-                    state.count_group("Bonuses", player)
-                ) >= curscore,
+                    state.count_group("Bonuses", player),
+                    factor, max_items
+                )>= curscore,
         )
         
-def calculate_score_in_logic(letters, turns, bonuses):
-    if letters < 8:
-        return letters
+    return factor
+        
+def calculate_score_in_logic(letters, turns, bonuses, factor, max_items):
+    if letters < 8 or turns < 2:
+        return min(letters, 7)
     bonus = 1
     if turns > 3:
-        bonus = 1 + 0.1 * bonuses
-    return min(letters * 2.25, turns * 15) * bonus
+        bonus = 1 + 0.03 * bonuses
+    logic_factor = 1 + (factor - 1) * (letters + turns + bonuses) / max_items
+    return logic_factor * min(letters * 2, turns * 20) * bonus
 
 def set_yacht_completion_rules(world: MultiWorld, player: int):
     """

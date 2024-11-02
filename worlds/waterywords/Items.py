@@ -22,20 +22,25 @@ item_table = {l: ItemData(1000209000+n, ItemClassification.progression | ItemCla
               else ItemData(1000209000+n, ItemClassification.progression) for n,l in enumerate(letters)}
 
 item_table["Extra turn"] = ItemData(1000208999, ItemClassification.progression)
+item_table["Word Length Bonus"] = ItemData(1000208998, ItemClassification.filler)
 
-possible_bonuses = ["Triple Word Value", "Triple Letter Value", "Double Word Value",  "Double Letter Value"]
-bonus_locations = ["NW", "NE", "SW", "SE", "AP1", "AP2", "AP3", "AP4", "AP5", "AP6"]
+possible_bonuses = ["×3W", "×2W", "×3L", "×2L"]
+bonus_locations = [f"{i},{i}" for i in range(15)] \
+                    + [f"{i},{i+8}" for i in range(7)] \
+                    + [f"{i+8},{i}" for i in range(7)] \
+                    + [f"{6-i},{i}" for i in range(7)] \
+                    + [f"{14-i},{i}" for i in range(15)] \
+                    + [f"{14-i},{8+i}" for i in range(7)] \
+                    + ["7,1", "7,13"]
+bonus_locations = list(set(bonus_locations))
 
 bonus_item_list = []  # list of lists
-id = 1000208000
+id = 1000209100
 for bl in bonus_locations:
     for pb in possible_bonuses:
         item_table[f"{pb} {bl}"] = ItemData(id, ItemClassification.progression)
         id += 1
     bonus_item_list.append([f"{pb} {bl}" for pb in possible_bonuses])  # add list
-
-if(id >= 1000209000):
-    exit("Oh boy there are too many bonuses and ids are screwed up...")
 
 group_table: Dict[str, Set[str]] = {
     "Tiles": letters,
